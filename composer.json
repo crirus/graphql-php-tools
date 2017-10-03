@@ -1,18 +1,16 @@
 {
   "name": "olamobile/graphql-php-tools",
   "description": "Olamobile GraphQL multiple schemas stitching.",
-  "type": "library",
-  "repositories": [
-      {
-        "type": "git",
-        "url": "git@bitbucket.org:olatimisoara/graphql-php.git"
-      }
-  ],
+  "license": "proprietary",
+  "minimum-stability": "stable",
   "require": {
-    "olamobile/graphql-php":"*"
+    "php": "^7.0"
   },
-  "config": {
-    "optimize-autoloader": true,
-    "component-dir": "vendor/_components"
+  "require-dev": {
+  },
+  "autoload": {
+    "psr-4": {
+      "Ola\\": "src/Ola"
+    }
   }
 }

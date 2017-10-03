@@ -11,7 +11,7 @@
   ],
   "require": {
     "php": "^7.0",
-    "olamobile/graphql-php": "*"
+    "olamobile/graphql-php": "dev-master"
   },
   "require-dev": {
   },

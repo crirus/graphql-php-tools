@@ -1,5 +1,5 @@
 <?php
-namespace Olamobile\GraphQL\Tools;
+namespace Ola\GraphQL\Tools;
 
 use GraphQL\Error\Error;
 use GraphQL\Executor\Values;
@@ -57,27 +57,27 @@ class ExtendSchema
     private $typeConfigDecorator;
     private $loadedTypeDefs;
 
-    
+
     private $typeDefinitionMap;
     private $typeExtensionsMap;
     private $typeDirectivesMap;
-    
+
     public function __construct(Schema $schema, DocumentNode $ast)
     {
         $this->schema = $schema;
         $this->ast = $ast;
     }
-    
+
     public function extendSchema()
     {
         $schema = $this->schema;
         Utils::invariant($this->schema instanceof Schema, 'Must provide valid GraphQLSchema');
-        Utils::invariant($this->ast && $this->ast->kind === NodeKind::DOCUMENT, 'Must provide valid Document AST');        
-        
+        Utils::invariant($this->ast && $this->ast->kind === NodeKind::DOCUMENT, 'Must provide valid Document AST');
+
         $this->typeDefinitionMap = [];
         $this->typeExtensionsMap = [];
         $this->typeDirectivesMap = [];
-        
+
         foreach ($this->ast->definitions as $def) {
             switch ($def->kind) {
                 case NodeKind::OBJECT_TYPE_DEFINITION:
@@ -104,11 +104,11 @@ class ExtendSchema
                     if (!($existingType instanceof ObjectType)) {
                         throw new Error("Cannot extend non-object type \"$extendedTypeName\"");
                     }
-                    
+
                     $this->typeExtensionsMap[$extendedTypeName][] = $def;
-                    
-                    break;                    
-                    
+
+                    break;
+
                 case NodeKind::DIRECTIVE_DEFINITION:
                     $directiveName = $def->name->value;
                     $existingDirective = $this->schema->getDirective($directiveName);
@@ -124,8 +124,8 @@ class ExtendSchema
         // return the same unmodified Schema instance.
         if (!count($this->typeDefinitionMap) && !count($this->typeExtensionsMap) && !count($this->typeDirectivesMap)) {
             return $this->schema;
-        }        
-        
+        }
+
         // A cache to use to store the actual GraphQLType definition objects by name.
         // Initialize to the GraphQL built in scalars and introspection types. All
         // functions below are inline so that this type def cache is within the scope
@@ -146,11 +146,11 @@ class ExtendSchema
             '__EnumValue' => Introspection::_enumValue(),
             '__TypeKind' => Introspection::_typeKind(),
         ];
-        
-        
+
+
         // Get the root Query, Mutation, and Subscription object types.
         $queryType = $this->getTypeFromDef($this->schema->getQueryType());
-        
+
         $existingMutationType = $this->schema->getMutationType();
         $mutationType = $existingMutationType ? $this->getTypeFromDef($existingMutationType) : null;
 
@@ -164,7 +164,7 @@ class ExtendSchema
         foreach ($typeMap as $typeName => $type) {
             $types[$typeName] = $this->getTypeFromDef($type);
         }
-        
+
         // Do the same with new types, appending to the list of defined types.
         foreach ($this->typeDefinitionMap as $typeName => $type) {
             $types[$typeName] = $this->getTypeFromAST($type);
@@ -179,7 +179,7 @@ class ExtendSchema
             'directives' => $this->getMergedDirectives(),
             'astNode' => $this->schema->getAstNode(),
         ]);
-            
+
     }
 
     private function getMergedDirectives() {
@@ -188,12 +188,12 @@ class ExtendSchema
 
         $newDirectives = [];
         foreach ($this->typeDirectivesMap as $directiveNode) {
-            $newDirectives[] = $this->getDirective($directiveNode); 
+            $newDirectives[] = $this->getDirective($directiveNode);
         }
-    
+
         return array_merge($existingDirectives, $newDirectives);
     }
-    
+
     private function getDirective(DirectiveDefinitionNode $directiveNode) {
         return new Directive([
             'name' => $directiveNode->name->value,
@@ -203,9 +203,9 @@ class ExtendSchema
             }),
             'args' => $directiveNode->arguments ? FieldArgument::createMap($this->makeInputValues($directiveNode->arguments)) : null,
         ]);
-    }    
-    
-    
+    }
+
+
     private function getTypeFromDef($typeDef) {
         $type = $this->_getNamedType($typeDef->name);
         Utils::invariant($type, "Missing type \"$typeDef->name\" from schema");
@@ -235,7 +235,7 @@ class ExtendSchema
             return $typeDef;
         }
     }
-    
+
     // Given a type's introspection result, construct the correct Type instance.
     private function extendType($type) {
         if ($type instanceof ObjectType) {
@@ -249,7 +249,7 @@ class ExtendSchema
         }
         return $type;
     }
-    
+
     private function extendObjectType($type) {
         $name = $type->name;
         $extensionASTNodes = $type->extensionASTNodes;
@@ -292,11 +292,11 @@ class ExtendSchema
             'resolveType' => $type->resolveType,
         ]);
     }
-    
+
     private function extendImplementedInterfaces($type) {
         if ($type instanceof ObjectType) {
             $interfaces = Utils::map($type->getInterfaces(), function ($item){
-                return $this->getTypeFromDef($item);  
+                return $this->getTypeFromDef($item);
             });
         }
         // If there are any extensions to the interfaces, apply those here.
@@ -316,7 +316,7 @@ class ExtendSchema
         }
         return $interfaces;
     }
-    
+
     private function extendFieldMap($type) {
         $newFieldMap = [];
         $oldFieldMap = $type->getFields();
@@ -325,10 +325,10 @@ class ExtendSchema
             * @var \GraphQL\Type\Definition\FieldDefinition $field
             */
             //TODO Make arguments here array ---------------------------------------------------------------------------------------------------------------------
-            
-            
+
+
             $args = Utils::keyMap($field->args, function ($arg) { return $arg->name;});
-            
+
             $newFieldMap[$fieldName] = [
                 'description' => $field->description,
                 'deprecationReason' => $field->deprecationReason,
@@ -338,7 +338,7 @@ class ExtendSchema
                 'resolve' => $field->resolveFn,
             ];
         }
-        
+
 
         // If there are any extensions to the fields, apply those here.
         $extensions = $this->typeExtensionsMap[$type->name];
@@ -360,8 +360,8 @@ class ExtendSchema
             };
         }
         return $newFieldMap;
-    }    
-    
+    }
+
     /**
      * Given an ast node, returns its string description based on a contiguous
      * block full-line of comments preceding it.
@@ -394,7 +394,7 @@ class ExtendSchema
             return mb_substr(str_replace("\n", '', $comment), $minSpaces);
         }, array_reverse($comments)));
     }
-    
+
     private function buildOutputFieldType($typeNode) {
         if ($typeNode->kind == NodeKind::LIST_TYPE) {
             return Type::listOf($this->buildWrappedType($typeNode->type));
@@ -405,8 +405,8 @@ class ExtendSchema
             return Type::NonNull($nullableType);
         }
         return $this->getOutputTypeFromAST($typeNode);
-    }    
-    
+    }
+
     private function getOutputTypeFromAST($node) {
         $type = $this->getTypeFromAST($node);
         Utils::invariant(Type::isOutputType($type), 'Expected Input type.');
@@ -420,13 +420,13 @@ class ExtendSchema
         }
         return $type;
     }
-    
+
     private function getInterfaceTypeFromAST($node) {
         $type = $this->getTypeFromAST($node);
         Utils::invariant($type instanceof InterfaceType, 'Must be Interface type.');
         return $type;
     }
-    
+
     private function extendFieldType($typeDef) {
         if ($typeDef instanceof ListOfType) {
             return (Type::listOf($this->extendFieldType($typeDef->getWrappedType(true))));
@@ -436,7 +436,7 @@ class ExtendSchema
         }
         return $this->getTypeFromDef($typeDef);
     }
-    
+
     private function buildInputValues($values) {
         return Utils::keyValMap(
             $values,
@@ -474,12 +474,12 @@ class ExtendSchema
     private function getInputTypeFromAST($node) {
         return Type::isInputType($this->getTypeFromAST($node));
     }
-    
+
     private function getDeprecationReason($node) {
         $deprecated = Values::getDirectiveValues(Directive::deprecatedDirective(), $node);
         return isset($deprecated['reason']) ? $deprecated['reason'] : null;
     }
-    
+
     private function buildType($typeNode) {
         switch ($typeNode->kind) {
             case NodeKind::OBJECT_TYPE_DEFINITION: return $this->buildObjectType($typeNode);
@@ -492,7 +492,7 @@ class ExtendSchema
         }
         throw new Error('Unknown type kind ' + $typeNode->kind);
     }
-    
+
     private function buildObjectType($typeNode) {
         return new ObjectType([
             'name' => $nodeType->name->value,
@@ -506,10 +506,10 @@ class ExtendSchema
 
     private function buildImplementedInterfaces($typeNode) {
         return  Utils::map($typeNode->getInterfaces(), function ($item){
-            return $this->getInterfaceTypeFromAST($item);  
+            return $this->getInterfaceTypeFromAST($item);
         });
     }
-    
+
     private function buildFieldMap($typeNode) {
         return Utils::keyValMap(
             $typeNode->fields,
@@ -527,7 +527,7 @@ class ExtendSchema
             }
         );
     }
-    
+
     private function buildInterfaceType($typeNode) {
         return new InterfaceType([
             'name' => $typeNode->name->value,
@@ -536,7 +536,7 @@ class ExtendSchema
             'astNode' =>  $typeNode,
             'resolveType' => function() {
                                 $this->cannotExecuteExtendedSchema();
-                            }     
+                            }
         ]);
     }
 
@@ -559,7 +559,7 @@ class ExtendSchema
         Utils::invariant($type instanceof ObjectType, 'Must be Object type.');
         return $type;
     }
-    
+
     private function buildScalarType($typeNode) {
         return new CustomScalarType([
             'name' => $typeNode->name->value,
@@ -597,7 +597,7 @@ class ExtendSchema
             ),
             'astNode' => $typeNode,
         ]);
-    }    
+    }
 
     private function buildInputObjectType($typeNode) {
         return new InputObjectType([
@@ -607,7 +607,7 @@ class ExtendSchema
             'astNode' => $typeNode,
         ]);
     }
-    
+
     public function cannotExecuteExtendedSchema() {
         throw new Error(
             'Generated Schema cannot use Interface or Union types for execution.'

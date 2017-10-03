@@ -1,5 +1,5 @@
 <?php
-namespace Olamobile\GraphQL\Tools;
+namespace Ola\GraphQL\Tools;
 
 use GraphQL\Type\Schema;
 use GraphQL\Type\Introspection;
@@ -39,11 +39,11 @@ use GraphQL\GraphQL;
 
 Class MergeInfo {
     private $typeRegistry;
-    
+
     public function __construct($typeRegistry){
         $this->typeRegistry = $typeRegistry;
     }
-    
+
     /**
     * @param mixed $type: 'query' | 'mutation'
     * @param mixed $fieldName
@@ -58,9 +58,9 @@ Class MergeInfo {
             throw new \ErrorException("Cannot find subschema for root field \"$operation -> \"$fieldName\"");
         }
         $fragmentReplacements = $this->typeRegistry->fragmentReplacements;
-        return $this->delegateToSchema($schema, $fragmentReplacements, $operation, $fieldName, $args, $context, $info);             
+        return $this->delegateToSchema($schema, $fragmentReplacements, $operation, $fieldName, $args, $context, $info);
     }
-    
+
     /**
     * @param mixed $schema
     * @param mixed $fragmentReplacements
@@ -71,7 +71,7 @@ Class MergeInfo {
         } else {
             $type = $schema->getQueryType();
         }
-        
+
         if ($type) {
             /**
             * @var \GraphQL\Language\AST\DocumentNode
@@ -120,7 +120,7 @@ Class MergeInfo {
                 }
             })
         ]);
-  
+
         $newVariableDefinitions = Utils::map($newVariables, function($arg, $variable) use($rootField) {
             $argDef = Utils::find($rootField->args, function($rootArg) use ($arg) {return $rootArg->name == $arg;});
             if (!$argDef) {
@@ -141,14 +141,14 @@ Class MergeInfo {
         });
 
         list($selectionSet, $processedFragments, $usedVariables) = $this->filterSelectionSetDeep($schema, $fragmentReplacements, $type, $rootSelectionSet, $fragments);
-        
+
         if(!empty($variableDefinitions)){
             $variableDefinitions = array_filter($variableDefinitions, function($variableDefinition) use($usedVariables){
                 return in_array($usedVariables, $variableDefinition->variable->name->value);
-                
+
             });
         }
-        
+
         $operationDefinition = new OperationDefinitionNode([
             'kind' => NodeKind::OPERATION_DEFINITION,
             'operation' => $operation,
@@ -162,7 +162,7 @@ Class MergeInfo {
         ]);
         return $newDoc;
     }
-    
+
     /**
     * @param $fragmentReplacements - typeName: string, fieldName: string
     * @param $fragments
@@ -201,7 +201,7 @@ Class MergeInfo {
                 $usedVariables = array_merge($usedVariables, $fragmentUsedVariables);
                 $newFragments[$name] = [
                     'kind' => NodeKind::FRAGMENT_DEFINITION,
-                    'name' => new NameNode([ 
+                    'name' => new NameNode([
                         'kind' => NodeKind::NAME,
                         'value' => $name,
                     ]),
@@ -220,10 +220,10 @@ Class MergeInfo {
             $usedVariables,
         ];
     }
-    
+
     /**
     * returns : SelectionSetNode selectionSet, Array usedFragments, Array usedVariables
-    * 
+    *
     * @param mixed $type
     */
     private function filterSelectionSet($schema, $fragmentReplacements, $type, $selectionSet, $validFragments) {
@@ -231,11 +231,11 @@ Class MergeInfo {
         $usedVariables = [];
         $typeStack = [$type];
         $filteredSelectionSet = new SelectionSetNode(Visitor::visit($selectionSet, [
-            NodeKind::FIELD => [    
+            NodeKind::FIELD => [
                 'enter' => function($node) use($typeStack, $fragmentReplacements) {
                     $parentType = $this->resolveType($typeStack[count($typeStack) - 1]);
                     if ($parentType instanceof NonNull || $parentType instanceof ListOfType) {
-                        $parentType = $parentType->getWrappedType(true);//if error stdObject look for ->ofType 
+                        $parentType = $parentType->getWrappedType(true);//if error stdObject look for ->ofType
                     }
                     if ($parentType instanceof ObjectType || $parentType instanceof InterfaceType) {
                         $fields = $parentType->getFields();
@@ -303,10 +303,10 @@ Class MergeInfo {
             },
         ]));
 
-        
+
         return [$filteredSelectionSet, $usedFragments, $usedVariables];
-    }    
-    
+    }
+
     private function resolveType($type) {
         $lastType = $type;
         while ($lastType instanceof NonNull || $lastType instanceof ListOfType) {
@@ -314,7 +314,7 @@ Class MergeInfo {
         }
         return $lastType;
     }
-    
+
     private function typeToAst($type) {
         if ($type instanceof NonNull) {
             $innerType = $this->typeToAst($type->getWrappedType(true));//if error stdObject look for ->ofType
@@ -341,7 +341,7 @@ Class MergeInfo {
             ]);
         }
     }
-    
+
     /**
     * returnd array with FieldNode selection and variables array
     */
@@ -371,9 +371,9 @@ Class MergeInfo {
                 ])
             ]);
         });
-        
+
         $arguments = $existingArguments->merge($missingArguments);
-        
+
         return [
             new FieldNode([
                 'kind' => NodeKind::FIELD,
@@ -388,9 +388,9 @@ Class MergeInfo {
             $variables
         ];
     }
-    
 
-    
+
+
 }
 //End class MergeInfo
 
@@ -400,22 +400,22 @@ class MergeSchemas
     private $schemas = [];
     private $onTypeConflict;
     private $resolvers;
-    
+
     public static function mergeSchemas($schemas, $resolvers, $onTypeConflict = null){
         $merger = new self($schemas, $resolvers, $onTypeConflict);
         return $merger->merge($schemas, $resolvers, $onTypeConflict);
-    }  
-    
+    }
+
     public function __construct($schemas){
         if(!is_array($schemas)){
             throw new \Exception("Input schemas must be array of \"GraphQL\\Type\\Schema\" or string schema definitions");
         }
-        
+
         $this->schemas = $schemas;
-        $this->onTypeConflict = $onTypeConflict; 
+        $this->onTypeConflict = $onTypeConflict;
         $this->resolvers = $resolvers;
     }
-    
+
     public function merge($schemas, $resolvers, $onTypeConflict = null){
 
         if(!$onTypeConflict){
@@ -424,7 +424,7 @@ class MergeSchemas
             };
         }
 
-        
+
         $queryFields = [];
         $mutationFields = [];
 
@@ -452,7 +452,7 @@ class MergeSchemas
                 }
             }
         }
-        
+
         foreach ($actualSchemas as $key => $schema) {
             $typeRegistry->addSchema($schema);
             $queryType = $schema->getQueryType();
@@ -469,20 +469,20 @@ class MergeSchemas
                 }
             };
         }
-  
+
         // This is not a bug/oversight, we iterate twice cause we want to first
         // resolve all types and then force the type thunks
         foreach ($actualSchemas as $key => $schema) {
             $queryType = $schema->getQueryType();
             $mutationType = $schema->getMutationType();
-            
+
             foreach ($queryType->getFields() as $name => $val) {
                 if (!$fullResolvers['Query']) {
                     $fullResolvers['Query'] = [];
                 }
                 $fullResolvers['Query'][$name] = $this->createDelegatingResolver($mergeInfo, 'query', $name);
             }
-            
+
             $queryFields = array_merge($queryFields, $this->fieldMapToFieldConfigMap($queryType->getFields(), $typeRegistry));
             if ($mutationType) {
                 if (!$fullResolvers['Mutation']) {
@@ -495,11 +495,11 @@ class MergeSchemas
                 $mutationFields = array_merge($mutationFields, $this->fieldMapToFieldConfigMap($mutationType->getFields(), $typeRegistry));
             }
         }
-        
+
         $passedResolvers = [];
-        
+
         if(is_callable($resolvers)) $passedResolvers = call_user_func($resolvers, $mergeInfo);
-        
+
         if(count($passedResolvers))
         foreach ($passedResolvers as $typeName => $type) {
             if ($type instanceof ScalarType) {
@@ -539,9 +539,9 @@ class MergeSchemas
 
         ExecutableSchema::addResolveFunctionsToSchema($mergedSchema, $fullResolvers);
 
-        return $mergedSchema;        
+        return $mergedSchema;
     }
-    
+
     private function mergeDeep($target, $source) {
         $output = $target;
         if (is_array($target) && is_array($source)) {
@@ -565,7 +565,7 @@ class MergeSchemas
             return $mergeInfo->delegate($operation, $fieldName, $args, $context, $info);
         };
     }
-    
+
     private function recreateCompositeType($schema, $type, $registry) {
         if ($type instanceof ObjectType) {
             $fields = $type->getFields();
@@ -574,7 +574,7 @@ class MergeSchemas
                 'name' => $type->name,
                 'description' => $type->description,
                 'isTypeOf' => $type->isTypeOf,
-                'fields' => function() use($fields, $registry) { 
+                'fields' => function() use($fields, $registry) {
                                 return $this->fieldMapToFieldConfigMap($fields, $registry);
                 },
                 'interfaces' => function() use($interfaces, $registry) {
@@ -619,7 +619,7 @@ class MergeSchemas
         } else {
             throw new \ErrorException("Invalid type \"$type\"");
         }
-    }    
+    }
 
     private function fieldMapToFieldConfigMap($fields, $registry) {
         $result = [];
@@ -628,7 +628,7 @@ class MergeSchemas
         }
         return $result;
     }
-        
+
     private function fieldToFieldConfig(\GraphQL\Type\Definition\FieldDefinition $field, \GraphQL\Utils\TypeRegistry $registry) {
         return [
             'type' => $registry->resolveType($field->getType()),
@@ -637,7 +637,7 @@ class MergeSchemas
             'deprecationReason' => $field->deprecationReason,
         ];
     }
-    
+
     private function argsToFieldConfigArgumentMap($args, $registry) {
         $result = [];
         foreach ($args as $key => $arg) {
@@ -645,7 +645,7 @@ class MergeSchemas
         }
         return $result;
     }
-    
+
     private function argumentToArgumentConfig(\GraphQL\Type\Definition\FieldArgument $argument, \GraphQL\Utils\TypeRegistry $registry) {
         return [
             'name' => $argument->name,
@@ -668,7 +668,7 @@ class MergeSchemas
         }
         return $resolvedType;
     }
-    
+
     private function inputFieldMapToFieldConfigMap($fields, $registry) {
         return Utils::mapValues($fields, function($field) use($registry) {
                                             return $this->inputFieldToFieldConfig($field, $registry);
@@ -680,6 +680,6 @@ class MergeSchemas
             'type' => $registry->resolveType($field->type),
             'description' => $field->description,
         ];
-    }    
+    }
 }
 ?>

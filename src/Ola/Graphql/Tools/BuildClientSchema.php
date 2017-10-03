@@ -1,5 +1,5 @@
 <?php
-namespace Olamobile\GraphQL\Tools;
+namespace Ola\GraphQL\Tools;
 
 use GraphQL\Error\Error;
 use GraphQL\Executor\Values;
@@ -32,33 +32,33 @@ use GraphQL\Type\TypeKind;
 
 
 /**
- * Build instance of `GraphQL\Type\Schema` from  Introspection result of a Client Schema 
+ * Build instance of `GraphQL\Type\Schema` from  Introspection result of a Client Schema
 */
 class BuildClientSchema {
-    
+
     private $kinds = [];
     private $typeDefCache = [];
     private $typeIntrospectionMap = [];
-    private $types = [];    
+    private $types = [];
     private $introspection;
-    
+
     public static function build($introspection) {
         $builder = new self($introspection);
         return $builder->buildClientSchema();
     }
-    
+
     public function __construct($introspection) {
         $this->introspection = $introspection;
     }
-    
+
     private function buildClientSchema(){
-        
+
         $schemaIntrospection = $this->introspection->__schema;
 
         $this->typeIntrospectionMap = Utils::keyMap($schemaIntrospection->types, function($type){
             return $type->name;
         });
-        
+
         $this->typeDefCache = [
             'String' => Type::string(),
             'Int' => Type::int(),
@@ -73,13 +73,13 @@ class BuildClientSchema {
             '__InputValue' => Introspection::_inputValue(),
             '__EnumValue' => Introspection::_enumValue(),
             '__TypeKind' => Introspection::_typeKind(),
-        ];        
-        
+        ];
+
         // Iterate through all types, getting the type definition for each, ensuring that any type not directly referenced by a field will get created.
         $types = Utils::map($schemaIntrospection->types, function($typeIntrospection){
-            return $this->getNamedType($typeIntrospection->name);        
+            return $this->getNamedType($typeIntrospection->name);
         });
-        
+
         // Get the root Query, Mutation, and Subscription types.
         $queryType = $this->getObjectType($schemaIntrospection->queryType);
 
@@ -88,27 +88,27 @@ class BuildClientSchema {
         $subscriptionType = $schemaIntrospection->subscriptionType ? $this->getObjectType($schemaIntrospection->subscriptionType) : null;
 
         // Get the directives supported by Introspection, assuming empty-set if directives were not queried for.
-        $directives = $schemaIntrospection->directives ? 
+        $directives = $schemaIntrospection->directives ?
             Utils::map(
-                $schemaIntrospection->directives, 
+                $schemaIntrospection->directives,
                 function ($directive){
                     return $this->buildDirective($directive);
-                }) : 
+                }) :
             [];
-        
+
         return new Schema([
             'query' => $queryType,
             'mutation' => $mutationType,
             'subscription' => $subscriptionType,
             'types' => $types,
             'directives' => $directives
-        ]);        
-        
+        ]);
+
     }
-    
+
     /**
     * Given a type's introspection result, construct the correct GraphQLType instance.
-    * 
+    *
     */
     private function buildType($type){
         switch (Utils::getTypeKindLiteral($type->kind)) {
@@ -128,7 +128,7 @@ class BuildClientSchema {
                 throw new \ErrorException("Invalid or incomplete schema, unknown kind \"$type->kind\". Ensure  that a full introspection query is used in order to build a client schema.");
         }
     }
-    
+
     private function buildScalarDef($scalarIntrospection) {
         $tp = new CustomScalarType([
             'name' => $scalarIntrospection->name,
@@ -145,7 +145,7 @@ class BuildClientSchema {
             },
             'parseLiteral' => function() {
                 return false;
-            },        
+            },
         ]);
         return $tp;
     }
@@ -162,13 +162,13 @@ class BuildClientSchema {
             }
         ]);
     }
-    
+
     private function buildInterfaceDef($interfaceIntrospection) {
         return new InterfaceType([
             'name' => $interfaceIntrospection->name,
             'description' => $interfaceIntrospection->description,
             'fields' => function () use($interfaceIntrospection) {
-                $ret = $this->buildFieldDefMap($interfaceIntrospection); 
+                $ret = $this->buildFieldDefMap($interfaceIntrospection);
                 return $ret;
             },
             'resolveType' => function() {
@@ -176,7 +176,7 @@ class BuildClientSchema {
             }
         ]);
     }
-    
+
     private function buildEnumDef($enumIntrospection) {
         return new EnumType([
             'name' => $enumIntrospection->name,
@@ -191,11 +191,11 @@ class BuildClientSchema {
                         'description' => $fieldIntrospection->description,
                         'deprecationReason' => $fieldIntrospection->deprecationReason
                     ];
-                }                
+                }
             )
         ]);
     }
-    
+
     private function buildInputObjectDef($inputObjectIntrospection) {
         return new InputObjectType([
             'name' => $inputObjectIntrospection->name,
@@ -216,9 +216,9 @@ class BuildClientSchema {
             'resolveType' => $this->cannotExecuteClientSchema(),
         ]);
     }
-    
+
     private function buildFieldDefMap($typeIntrospection) {
-        return Utils::keyValMap( 
+        return Utils::keyValMap(
             $typeIntrospection->fields,
             function ($fieldIntrospection){
                 return $fieldIntrospection->name;
@@ -233,7 +233,7 @@ class BuildClientSchema {
             }
         );
     }
-    
+
     private function buildInputValueDefMap($inputValueIntrospection) {
         return Utils::keyValMap(
             $inputValueIntrospection,
@@ -256,22 +256,22 @@ class BuildClientSchema {
             }
         );
     }
-    
+
     private function getInterfaceType($typeRef) {
         $type = $this->getType($typeRef);
         Utils::invariant($type, 'Introspection must provide interface type for interfaces.');
         return $type;
     }
-    
+
     private function getOutputType($typeRef) {
         $type = $this->getType($typeRef);
         Utils::invariant(Type::isOutputType($type), 'Introspection must provide output type for fields.');
         return $type;
     }
-    
+
     /**
     * Given a type reference in introspection, return the GraphQLType instance, preferring cached instances before building new instances.
-    * 
+    *
     */
     private function getType($typeRef) {
         if (Utils::getTypeKindLiteral($typeRef->kind) === TypeKind::LIST_KIND) {
@@ -305,18 +305,18 @@ class BuildClientSchema {
         $this->typeDefCache[$typeName] = $typeDef;
         return $typeDef;
     }
-    
+
     private function getInputType($typeRef) {
         $type = $this->getType($typeRef);
         Utils::invariant(Type::isInputType($type), 'Introspection must provide input type for arguments %s.', var_export($type, 1));
         return $type;
     }
-    
+
     private function getObjectType($typeRef) {
         $type = $this->getType($typeRef);
         Utils::invariant($type instanceof ObjectType, 'Introspection must provide object type for possibleTypes.');
         return $type;
-    }    
+    }
 
     private function buildDirective($directiveIntrospection) {
         // Support deprecated `on****` fields for building `locations`, as this is used by GraphiQL which may need to support outdated servers.
@@ -324,9 +324,9 @@ class BuildClientSchema {
         $onField = !$directiveIntrospection->onField ? [] : [DirectiveLocation::FIELD];
         $onOperation = !$directiveIntrospection->onOperation ? [] : [DirectiveLocation::QUERY, DirectiveLocation::MUTATION, DirectiveLocation::SUBSCRIPTION];
         $onFragment = !$directiveIntrospection->onFragment ? [] : [DirectiveLocation::FRAGMENT_DEFINITION, DirectiveLocation::FRAGMENT_SPREAD, DirectiveLocation::INLINE_FRAGMENT];
-        
+
         $locations = array_merge($locations, $onField, $onOperation, $onFragment);
-        
+
         return new Directive([
             'name' => $directiveIntrospection->name,
             'description' => $directiveIntrospection->description,
@@ -334,7 +334,7 @@ class BuildClientSchema {
             'args' => $this->buildInputValueDefMap($directiveIntrospection->args),
         ]);
     }
-          
+
     private function cannotExecuteClientSchema(){
         throw new \ErrorException('Client Schema cannot use Interface or Union types for execution.');
     }

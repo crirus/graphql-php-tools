@@ -1,5 +1,5 @@
 <?php
-namespace Olamobile\GraphQL\Tools;    
+namespace Ola\GraphQL\Tools;
 
 use GraphQL\Type\Definition\ListOfType;
 use GraphQL\Type\Definition\NonNull;
@@ -55,14 +55,14 @@ class TypeRegistry {
         if ($query) {
             $fieldNames = array_keys($query->getFields());
             foreach ($fieldNames as $fieldName) {
-                $this->schemaByField['query'][$fieldName] = $schema;    
+                $this->schemaByField['query'][$fieldName] = $schema;
             }
         }
         $mutation = $schema->getMutationType();
         if ($mutation) {
             $fieldNames = array_keys($mutation->getFields());
             foreach ($fieldNames as $fieldName) {
-                $this->schemaByField['mutation'][$fieldName] = $schema;            
+                $this->schemaByField['mutation'][$fieldName] = $schema;
             }
         }
     }

@@ -1,5 +1,5 @@
 <?php
-namespace Olamobile\GraphQL\Tools;
+namespace Ola\GraphQL\Tools;
 
 use GraphQL\Error\Error;
 use GraphQL\Executor\Values;
@@ -50,13 +50,13 @@ class TypeError extends \ErrorException {
 
 
 /**
- * Build instance of `GraphQL\Type\Schema` from  Introspection result of a Client Schema 
+ * Build instance of `GraphQL\Type\Schema` from  Introspection result of a Client Schema
 */
 class ExecutableSchema {
-  
+
     /**
     * put your comment there...
-    * 
+    *
     * @param mixed $typeDefs
     * @param mixed $resolvers
     * @param mixed $connectors
@@ -68,10 +68,10 @@ class ExecutableSchema {
         $execSchema = new self();
         return $execSchema->makeEx($typeDefs, $resolvers, $connectors, $logger, $allowUndefinedInResolve, $resolverValidationOptions);
     }
-    
+
     private function makeEx($typeDefs, $resolvers, $connectors, $logger, $allowUndefinedInResolve, $resolverValidationOptions) {
         $schema = $this->_generateSchema($typeDefs, $resolvers, $logger, $allowUndefinedInResolve, $resolverValidationOptions);
-        
+
         if (is_callable($resolvers['__schema'] )) {
             $this->addSchemaLevelResolveFunction($schema, $resolvers['__schema']);
         }
@@ -83,7 +83,7 @@ class ExecutableSchema {
 
         return $schema;
     }
-    
+
     private function _generateSchema($typeDefinitions, $resolveFunctions, $logger, $allowUndefinedInResolve, $resolverValidationOptions) {
         if (empty($typeDefinitions)) {
             throw new SchemaError('Must provide typeDefs');
@@ -109,11 +109,11 @@ class ExecutableSchema {
         }
 
         return $schema;
-    }    
-    
+    }
+
     private function addErrorLoggingToSchema(&$schema, $logger) {
         //TODO make this work
-        return;        
+        return;
         if (!$logger) {
             throw new \ErrorException('Must provide a logger');
         }
@@ -135,7 +135,7 @@ class ExecutableSchema {
         //TODO make this work
         return;
         if(empty($fn)){
-            $fn = function ($source, $args, $context, $info){ 
+            $fn = function ($source, $args, $context, $info){
                 return $this->defaultResolveFn($source, $args, $context, $info);
             };
         }
@@ -170,9 +170,9 @@ class ExecutableSchema {
             }
         };
     }
-    
-    
-    
+
+
+
     private function addCatchUndefinedToSchema($schema) {
         $this->forEachField($schema, function($field, $typeName, $fieldName) {
             $errorHint = "$typeName -> $fieldName";
@@ -194,7 +194,7 @@ class ExecutableSchema {
             return $result;
         };
     }
-    
+
     /**
     * If a resolve function is not given, then a default resolve behavior is used
     * which takes the property of the source object of the same name as the field
@@ -211,16 +211,16 @@ class ExecutableSchema {
             return $property;
         }
     }
-    
-    
+
+
     private function assertResolveFunctionsPresent($schema, $resolverValidationOptions) {
         list($requireResolversForArgs, $requireResolversForNonScalar, $requireResolversForAllFields) = $resolverValidationOptions;
 
-        if ($requireResolversForAllFields && 
+        if ($requireResolversForAllFields &&
             ($requireResolversForArgs || $requireResolversForNonScalar)) {
-            throw new TypeError('requireResolversForAllFields takes precedence 
-            over the more specific assertions. Please configure either 
-            requireResolversForAllFields or requireResolversForArgs / 
+            throw new TypeError('requireResolversForAllFields takes precedence
+            over the more specific assertions. Please configure either
+            requireResolversForAllFields or requireResolversForArgs /
             requireResolversForNonScalar, but not a combination of them.');
         }
 
@@ -241,7 +241,7 @@ class ExecutableSchema {
             }
         });
     }
-    
+
     function expectResolveFunction($field, $typeName, $fieldName) {
         if (!$field->resolveFn) {
             return;
@@ -249,8 +249,8 @@ class ExecutableSchema {
         if (!is_callable($field->resolveFn)) {
             throw new SchemaError(`Resolver \"$typeName -> $fieldName\" must be a function`);}
     }
-    
-    
+
+
     private function buildSchemaFromTypeDefinitions($typeDefinitions) {
         $myDefinitions = $typeDefinitions;
         $astDocument = null;
@@ -266,19 +266,19 @@ class ExecutableSchema {
         }
 
         if(is_string($myDefinitions)){
-            $astDocument = Parser::parse($myDefinitions, ['noLocation' => true]);//TODO remove this later 
+            $astDocument = Parser::parse($myDefinitions, ['noLocation' => true]);//TODO remove this later
         }
-        
+
         $schema = BuildSchema::buildAST($astDocument);
         $extensionsAst = self::extractExtensionDefinitions($astDocument);
-        
+
         if (count($extensionsAst->definitions)) {
             $schema = ExtendSchema::extend($schema, $extensionsAst);
         }
 
         return $schema;
     }
-    
+
     /**
     * @param mixed $ast
     * @returns DocumentNode
@@ -288,9 +288,9 @@ class ExecutableSchema {
             return $node->kind == NodeKind::TYPE_EXTENSION_DEFINITION;
         });
         $ast->definitions = $extensionDefs;
-        return $ast; 
+        return $ast;
     }
-    
+
     public static function addResolveFunctionsToSchema(&$schema, $resolveFunctions) {
         foreach ($resolveFunctions as $typeName => $resolver) {
             $type = $schema->getType($typeName);
@@ -333,7 +333,7 @@ class ExecutableSchema {
             }
         };
     }
-    
+
     /**
     * @param \GraphQL\Type\Schema $schema
     * @param mixed $resolveFunctions
@@ -347,7 +347,7 @@ class ExecutableSchema {
 
             if (!$type && $typeName !== '__schema') {
                 throw new SchemaError("\"$typeName\" defined in resolvers, but not in schema");
-            }    
+            }
             foreach ($resolveFunctions[$typeName] as $fieldName => $resolver) {
                 if (Utils::startsWith($fieldName,'__')) {
                     // this is for isTypeOf and resolveType and all the other stuff.
@@ -369,10 +369,10 @@ class ExecutableSchema {
                 if (!$fields[$fieldName]) {
                     throw new SchemaError("$typeName -> $fieldName defined in resolvers, but not in schema");
                 }
-                
+
                 $field = $fields[$fieldName];
                 $fieldResolve = $resolveFunctions[$typeName][$fieldName];
-                
+
                 if (is_callable($fieldResolve)) {
                     $field->resolveFn = $fieldResolve;
                 } else {
@@ -385,17 +385,17 @@ class ExecutableSchema {
         };
         return $schema;
     }
-    
+
     private static function setFieldProperties(\GraphQL\Type\Definition\FieldDefinition $field, $propertiesObj) {
         foreach ($propertiesObj as $propertyName => $prop) {
-            $fieldName = $propertyName; 
+            $fieldName = $propertyName;
             if($propertyName == 'resolve') $fieldName.='Fn';
-            $field->{$fieldName} = $propertiesObj[$propertyName];    
+            $field->{$fieldName} = $propertiesObj[$propertyName];
         }
         return $field;
     }
 
-    
+
     private static function getFieldsForType($type) {
         if (($type instanceof ObjectType) || ($type instanceof InterfaceType)) {
             return $type->getFields();
@@ -403,8 +403,8 @@ class ExecutableSchema {
             return null;
         }
     }
-    
-    
+
+
     // wraps all resolve functions of query, mutation or subscription fields
     // with the provided function to simulate a root schema level resolve function
     function addSchemaLevelResolveFunction($schema, $fn) {
@@ -431,7 +431,7 @@ class ExecutableSchema {
         $resolvedTypeDefinitions = [];
         foreach ($typeDefinitionsArray as $typeDef) {
             if ($this->isDocumentNode($typeDef)) {
-                $typeDef = Printer::doPrint($typeDef);    
+                $typeDef = Printer::doPrint($typeDef);
             }
 
             if (is_callable($typeDef)) {
@@ -448,19 +448,19 @@ class ExecutableSchema {
                 throw new SchemaError('typeDef array must contain only strings and functions, got '.$type);
             }
         }
-        
+
         Utils::mapValues($resolvedTypeDefinitions, function($x){
-           return trim($x); 
+           return trim($x);
         });
-        
+
         return implode("\n",array_unique($resolvedTypeDefinitions));
     }
-    
+
     private function isDocumentNode($typeDefinitions){
         if(is_string($typeDefinitions)) return false;
         return $typeDefinitions->kind == NodeKind::DOCUMENT;
     }
-    
+
     function forEachField($schema, $fn) {
         $typeMap = $schema->getTypeMap();
         foreach ($typeMap as $typeName => $type) {
@@ -473,7 +473,7 @@ class ExecutableSchema {
             }
         };
     }
-    
+
     private function getNamedTypeNode($typeNode)
     {
         $namedType = $typeNode;

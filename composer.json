@@ -4,10 +4,6 @@
   "license": "proprietary",
   "minimum-stability": "stable",
   "repositories": [
-      {
-        "type": "git",
-        "url": "git@bitbucket.org:olatimisoara/graphql-php.git"
-      }
   ],
   "require": {
     "php": "^7.0",

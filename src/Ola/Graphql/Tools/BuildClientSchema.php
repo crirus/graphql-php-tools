@@ -12,6 +12,8 @@ use GraphQL\Language\Printer;
 
 
 use GraphQL\Type\Schema;
+use GraphQL\Type\Introspection;
+use GraphQL\Type\TypeKind;
 use GraphQL\Type\Definition\Directive;
 use GraphQL\Type\Definition\EnumType;
 use GraphQL\Type\Definition\InputObjectType;
@@ -24,10 +26,10 @@ use GraphQL\Type\Definition\CustomScalarType;
 use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Definition\UnionType;
 
+use GraphQL\Utils\AST;
+use GraphQL\Utils\Utils;
 
 
-use GraphQL\Type\Introspection;
-use GraphQL\Type\TypeKind;
 
 
 

@@ -22,9 +22,7 @@ use GraphQL\Language\Visitor;
 use GraphQL\Language\Parser;
 
 use GraphQL\Utils\Utils;
-use GraphQL\Utils\TypeRegistry;
-use GraphQL\Utils\ExecutableSchema;
-use GraphQL\Utils\ExtendSchema;
+use GraphQL\Utils\BuildSchema;
 
 use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Definition\ListOfType;
@@ -36,6 +34,11 @@ use GraphQL\Type\Definition\ScalarType;
 
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\GraphQL;
+
+
+use Ola\GraphQL\Tools\ExecutableSchema;
+use Ola\GraphQL\Tools\ExtendSchema;
+use Ola\GraphQL\Tools\TypeRegistry;
 
 Class MergeInfo {
     private $typeRegistry;
@@ -629,7 +632,7 @@ class MergeSchemas
         return $result;
     }
 
-    private function fieldToFieldConfig(\GraphQL\Type\Definition\FieldDefinition $field, \GraphQL\Utils\TypeRegistry $registry) {
+    private function fieldToFieldConfig(\GraphQL\Type\Definition\FieldDefinition $field, \Ola\GraphQL\Tools\TypeRegistry $registry) {
         return [
             'type' => $registry->resolveType($field->getType()),
             'args' => $this->argsToFieldConfigArgumentMap($field->args, $registry),
@@ -646,7 +649,7 @@ class MergeSchemas
         return $result;
     }
 
-    private function argumentToArgumentConfig(\GraphQL\Type\Definition\FieldArgument $argument, \GraphQL\Utils\TypeRegistry $registry) {
+    private function argumentToArgumentConfig(\GraphQL\Type\Definition\FieldArgument $argument, \Ola\GraphQL\Tools\TypeRegistry $registry) {
         return [
             'name' => $argument->name,
             'type' => $registry->resolveType($argument->getType()),

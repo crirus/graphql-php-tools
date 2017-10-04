@@ -1,13 +1,15 @@
 <?php
 namespace Ola\GraphQL\Tools;
 
-use Olamobile\GraphQL\Types;
+use Ola\GraphQL\Tools\BuildClientSchema;
+use Ola\GraphQL\Tools\RoutingResolvers;
+use Ola\GraphQL\Tools\ExecutableSchema;
+
+use Ola\GraphQL\Types;
 
 use GraphQL\Schema;
 use GraphQL\Type\Introspection;
-use GraphQL\Utils\BuildClientSchema;
-use GraphQL\Utils\RoutingResolvers;
-use GraphQL\Utils\ExecutableSchema;
+
 
 class RemoteSchema{
 
@@ -30,7 +32,7 @@ class RemoteSchema{
         $schemas[] = $linkSchema;
 
         //$ast = SchemaPrinter::doPrint($schemas[0]);
-
+        DebugBreak('1@localhost');
         $schema = MergeSchemas::mergeSchemas($schemas, $resolvers, null);
 
         return $schema;
@@ -46,7 +48,7 @@ class RemoteSchema{
         curl_setopt($chObj, CURLOPT_URL, $endpointURL);
         curl_setopt($chObj, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($chObj, CURLOPT_POST, 1);
-        curl_setopt($chObj, CURLOPT_HEADER, true);
+        curl_setopt($chObj, CURLOPT_HEADER, false);
         curl_setopt($chObj, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
         curl_setopt($chObj, CURLINFO_HEADER_OUT, true);
         curl_setopt($chObj, CURLOPT_POSTFIELDS, $json);
@@ -57,9 +59,13 @@ class RemoteSchema{
         $introspectionResponse = array_pop(explode("\r\n\r\n",$response));
         $introspectionResult = json_decode($introspectionResponse);
 
+        if(!$introspectionResult->data) throw new \Exception("Error reading schema introspection for endpoint ".$endpointURL);
+        
         $schema = BuildClientSchema::build($introspectionResult->data);
         $schema = RoutingResolvers::makeRemoteExecutableSchema($schema, $endpointURL);
 
+        
+        
         return $schema;
     }
 }

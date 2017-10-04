@@ -37,6 +37,8 @@ use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Definition\UnionType;
 use GraphQL\Type\Introspection;
 
+use GraphQL\Utils\Utils;
+
 /**
  * Create new instance of `GraphQL\Type\Schema` out of provided schema and a type language definition (string or parsed AST)
  * See [section in docs](type-system/type-language.md) for details.

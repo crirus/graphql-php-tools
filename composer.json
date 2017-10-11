@@ -7,7 +7,7 @@
   ],
   "require": {
     "php": "^7.0",
-    "olamobile/graphql-php": "dev-master"
+    "webonyx/graphql-php": "*"
   },
   "require-dev": {
   },

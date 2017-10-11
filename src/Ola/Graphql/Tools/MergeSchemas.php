@@ -93,7 +93,7 @@ Class MergeInfo {
                     return [$key, $value];
                 });
             }
-            DebugBreak('1@localhost');
+            
             $result = GraphQL::executeQuery($schema, $graphqlDoc, $info->rootValue, $context, $variableValues);
 
             if (!empty($result->errors)) {

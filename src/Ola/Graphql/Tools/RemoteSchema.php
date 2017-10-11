@@ -32,7 +32,7 @@ class RemoteSchema{
         $schemas[] = $linkSchema;
 
         //$ast = SchemaPrinter::doPrint($schemas[0]);
-        DebugBreak('1@localhost');
+
         $schema = MergeSchemas::mergeSchemas($schemas, $resolvers, null);
 
         return $schema;
@@ -55,7 +55,6 @@ class RemoteSchema{
 
         $response = curl_exec($chObj);
 
-        //DebugBreak('1@localhost');
         $introspectionResponse = array_pop(explode("\r\n\r\n",$response));
         $introspectionResult = json_decode($introspectionResponse);
 

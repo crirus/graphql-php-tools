@@ -60,7 +60,6 @@ class RoutingResolvers
 
     private static function createResolver($endpointURL) {
         return function ($root, $args, $context, $info) use ($endpointURL) {
-            DebugBreak('1@localhost');
             $operation = Printer::doPrint($info->operation);
             $fragments = Utils::map($info->fragments, function ($value, $key){
                 return Printer::doPrint($value);

@@ -1,7 +1,7 @@
 {
   "name": "olamobile/graphql-php-tools",
   "description": "Olamobile GraphQL multiple schemas stitching.",
-  "license": "proprietary",
+  "license": "GPL (free)",
   "minimum-stability": "stable",
   "repositories": [
   ],
